@@ -4,7 +4,6 @@ using namespace std;
 struct Frame {
     int m, n, stage;
 };
-
 const int MAX = 100000;
 Frame st[MAX]; // 全域堆疊模擬呼叫堆疊
 int top = -1;
