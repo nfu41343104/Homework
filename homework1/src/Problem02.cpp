@@ -1,6 +1,5 @@
 #include <iostream>
 using namespace std;
-
 void printCurrent(const char S[], const int pick[], int n, bool &firstOut) {
     if (!firstOut) cout << ", ";
     cout << "(";
