@@ -329,9 +329,9 @@ int main() {
 
 
 ```shell
-$ g++ main.cpp -std=c++14 -o main (Visual Studio 2022 為C+14)
-$ main.exe
-4
+$ g++ Promblem02.cpp -std=c++14 -o Promblem02 (Visual Studio 2022 為C+14)
+$ Promblem02.exe
+powerSet(S) = {(), (a), (b), (c), (a,b), (a,c), (b,c), (a,b,c)}
 ```
 
 ### 結論
