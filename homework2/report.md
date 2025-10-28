@@ -1,5 +1,5 @@
 # 41343104
-# Homework2 Polynomial
+# 作業二之Polynomial
 # Problem1
 
 ## 解題說明
