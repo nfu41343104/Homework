@@ -135,7 +135,6 @@ public:
         }
     }
 };
-
 int main() {
     // 以 newTerm 建立：p(x) = 3x^4 - 2x + 5
     Polynomial p;
