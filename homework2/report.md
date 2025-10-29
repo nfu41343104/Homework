@@ -272,6 +272,18 @@ int main() {
    - 保留 Problem 1 的核心運算功能（加法、乘法、代入運算等），並新增 << 與 >> 的支援以提升整體完整度。
      
 ## Algorithm Design & Programming
+1. 資料結構設計：
+   - 使用 Term 類別儲存每一項（包含 coef 與 exp）
+   - Polynomial 類別內以 Term* termArray 動態配置陣列管理多項式項目
+   - 自訂 ensureCapacity() 處理動態擴充記憶體空間
+
+2. 功能實作：
+   - AddTerm() ：插入或合併同次項
+   - Add() ：多項式加法
+   - Mult() ：多項式乘法
+   - Eval() ：代入實數 x 求 p(x)
+   - operator >> ：依序讀入項數 k 與 (k 組 coef, exp)
+   - operator << ：依數學格式輸出多項式
 ```cpp
 #include <iostream>
 using namespace std;
