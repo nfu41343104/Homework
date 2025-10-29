@@ -264,186 +264,238 @@ int main() {
 
 # Problem2
 ## 解題說明
-- 資料結構：使用Term結構來儲存單一項的係數和指數。Polynomial類別則包含一個Term型態的動態陣列termArray，以及容量（capacity）和實際項數（terms）的變數。這種設計能有效利用記憶體，只儲存非零項。
-- 動態擴充：當新增項次且陣列滿載時，NewTerm方法會自動將陣列容量加倍，確保程式能處理任意數量的項次。
-- 排序與合併：NewTerm方法在新增項次後，會檢查是否已有相同指數的項次，若有則合併係數。接著，它會對整個陣列進行排序，以指數遞減的順序排列，這有助於優化顯示和運算。
-- 多項式求值：Eval方法提供一個機制，能計算多項式在特定變數值下的結果。它遍歷所有項次，並將每個項次的運算結果相加。
-- 運算子多載：
-- operator>>：多載輸入運算子，使得使用者能透過cin方便地輸入多項式。
-- operator<<：多載輸出運算子，能將多項式以易於閱讀的格式輸出到cout。
-## 程式實作
+   本題延伸自 Problem 1 之多項式 ADT 實作，主要目標為擴充多項式類別功能，使其支援 C++ 的運算子多載機制，包含 >> 與 << 的重載，以提升類別的可擴充性與可讀性。
+
+   功能重點如下：
+   - 以 AddTerm() 建立多項式各項（係數、指數）
+   - 以 Print() 輸出可讀性高的多項式格式；
+   - 保留 Problem 1 的核心運算功能（加法、乘法、代入運算等），並新增 << 與 >> 的支援以提升整體完整度。
+     
+## Algorithm Design & Programming
 ```cpp
 #include <iostream>
-#include <cmath>
 using namespace std;
+
+class Polynomial;
 
 class Term {
     friend class Polynomial;
-    friend std::ostream& operator<<(std::ostream&, const Polynomial&);
+    friend ostream& operator<<(ostream&, const Polynomial&);
+    friend istream& operator>>(istream&, Polynomial&);
 private:
-    float coef;  
-    int exp;    
+    float coef;
+    int   exp;
 };
-class Polynomial {
-    friend istream& operator>>(istream& in, Polynomial& poly);
-    friend ostream& operator<<(ostream& out, const Polynomial& poly);
 
+class Polynomial {
 private:
     Term* termArray;
-    int capacity;
-    int terms;
+    int   capacity;
+    int   terms;
+
+    void ensureCapacity(int need) {
+        if (need <= capacity) return;
+        int newCap = capacity;
+        while (newCap < need) newCap *= 2;
+        Term* tmp = new Term[newCap];
+        for (int i = 0; i < terms; ++i) tmp[i] = termArray[i];
+        delete[] termArray;
+        termArray = tmp;
+        capacity = newCap;
+    }
+
+    void newTerm(float c, int e) {
+        if (c == 0) return;
+        int pos = 0;
+        while (pos < terms && termArray[pos].exp > e) ++pos;
+
+        if (pos < terms && termArray[pos].exp == e) {
+            termArray[pos].coef += c;
+            if (termArray[pos].coef == 0) {
+                for (int i = pos + 1; i < terms; ++i) termArray[i - 1] = termArray[i];
+                --terms;
+            }
+            return;
+        }
+
+        ensureCapacity(terms + 1);
+        for (int i = terms; i > pos; --i) termArray[i] = termArray[i - 1];
+        termArray[pos].coef = c;
+        termArray[pos].exp = e;
+        ++terms;
+    }
+
+    static float ipow(float x, int n) {
+        float r = 1.0f, base = x;
+        int e = n;
+        while (e > 0) {
+            if (e & 1) r *= base;
+            base *= base;
+            e >>= 1;
+        }
+        return r;
+    }
 
 public:
-    Polynomial() {
-        capacity = 10;
-        terms = 0;
+    Polynomial() : capacity(2), terms(0) { termArray = new Term[capacity]; }
+    ~Polynomial() { delete[] termArray; }
+
+    Polynomial(const Polynomial& other) : capacity(other.capacity), terms(other.terms) {
         termArray = new Term[capacity];
-    }
-    void NewTerm(float c, int e) {
-        if (c == 0) return;
-        for (int i = 0; i < terms; i++) {
-            if (termArray[i].exp == e) {
-                termArray[i].coef += c;
-                return;
-            }
-        }
-        if (terms == capacity) {
-            capacity *= 2;
-            Term* temp = new Term[capacity];
-            for (int i = 0; i < terms; i++)
-                temp[i] = termArray[i];
-            delete[] termArray;
-            termArray = temp;
-        }
-
-        termArray[terms].coef = c;
-        termArray[terms].exp = e;
-        terms++;
-        for (int i = 0; i < terms - 1; i++) {
-            for (int j = i + 1; j < terms; j++) {
-                if (termArray[i].exp < termArray[j].exp)
-                    swap(termArray[i], termArray[j]);
-            }
-        }
+        for (int i = 0; i < terms; ++i) termArray[i] = other.termArray[i];
     }
 
-    float Eval(float x) const {
-        float result = 0;
-        for (int i = 0; i < terms; i++)
-            result += termArray[i].coef * pow(x, termArray[i].exp);
-        return result;
+    Polynomial& operator=(const Polynomial& rhs) {
+        if (this == &rhs) return *this;
+        delete[] termArray;
+        capacity = rhs.capacity;
+        terms = rhs.terms;
+        termArray = new Term[capacity];
+        for (int i = 0; i < terms; ++i) termArray[i] = rhs.termArray[i];
+        return *this;
     }
+
+    void AddTerm(float c, int e) { newTerm(c, e); }
+
+    Polynomial Add(const Polynomial& b) const {
+        Polynomial c;
+        int i = 0, j = 0;
+        while (i < terms && j < b.terms) {
+            if (termArray[i].exp > b.termArray[j].exp)
+                c.newTerm(termArray[i].coef, termArray[i].exp), ++i;
+            else if (termArray[i].exp < b.termArray[j].exp)
+                c.newTerm(b.termArray[j].coef, b.termArray[j].exp), ++j;
+            else {
+                float sum = termArray[i].coef + b.termArray[j].coef;
+                if (sum != 0) c.newTerm(sum, termArray[i].exp);
+                ++i; ++j;
+            }
+        }
+        while (i < terms) c.newTerm(termArray[i].coef, termArray[i].exp), ++i;
+        while (j < b.terms) c.newTerm(b.termArray[j].coef, b.termArray[j].exp), ++j;
+        return c;
+    }
+
+    Polynomial Mult(const Polynomial& b) const {
+        Polynomial c;
+        for (int i = 0; i < terms; ++i)
+            for (int j = 0; j < b.terms; ++j)
+                c.newTerm(termArray[i].coef * b.termArray[j].coef,
+                    termArray[i].exp + b.termArray[j].exp);
+        return c;
+    }
+
+    float Eval(float f) const {
+        float s = 0.0f;
+        for (int i = 0; i < terms; ++i)
+            s += termArray[i].coef * ipow(f, termArray[i].exp);
+        return s;
+    }
+
+    friend ostream& operator<<(ostream& os, const Polynomial& P) {
+        if (P.terms == 0) { os << "0"; return os; }
+        for (int i = 0; i < P.terms; ++i) {
+            float a = P.termArray[i].coef;
+            int   e = P.termArray[i].exp;
+
+            if (i && a >= 0) os << " + ";
+            if (i && a < 0) { os << " - "; a = -a; }
+
+            if (e == 0) os << a;
+            else {
+                if (a != 1) os << a;
+                os << "x";
+                if (e != 1) os << "^" << e;
+            }
+        }
+        return os;
+    }
+
+    friend istream& operator>>(istream& is, Polynomial& P) {
+        int k;
+        if (!(is >> k)) return is;
+        P.terms = 0;
+        if (P.capacity < k) P.ensureCapacity(k);
+        for (int i = 0; i < k; ++i) {
+            float c; int e;
+            is >> c >> e;
+            P.newTerm(c, e);
+        }
+        return is;
+    }
+
+    void Print() const { cout << *this; }
 };
-istream& operator>>(istream& in, Polynomial& poly) {
-    int n;
-    cout << "Enter number of terms: ";
-    in >> n;
-
-    poly.terms = 0; 
-
-    for (int i = 0; i < n; i++) {
-        float c;
-        int e;
-        cout << "Enter coefficient and exponent for term " << i + 1 << ": ";
-        in >> c >> e;
-        poly.NewTerm(c, e);
-    }
-
-    return in;
-}
-ostream& operator<<(ostream& out, const Polynomial& poly) {
-    if (poly.terms == 0) {
-        out << "0";
-        return out;
-    }
-
-    for (int i = 0; i < poly.terms; i++) {
-        float c = poly.termArray[i].coef;
-        int e = poly.termArray[i].exp;
-
-        if (i > 0) {
-            if (c >= 0) out << " + ";
-            else { out << " - "; c = -c; }
-        }
-        else if (c < 0) {
-            out << "-";
-            c = -c;
-        }
-
-        if (e == 0)
-            out << c;
-        else if (e == 1)
-            out << c << "x";
-        else
-            out << c << "x^" << e;
-    }
-
-    return out;
-}
 
 int main() {
+    // 以 newTerm 建立：p(x) = 3x^4 - 2x + 5
     Polynomial p;
+    p.AddTerm(3, 4);
+    p.AddTerm(-2, 1);
+    p.AddTerm(5, 0);
 
-    cin >> p;           
-    cout << "p(x) = " << p << endl; 
+    // q(x) = -x^3 + 4x^2 + 1
+    Polynomial q;
+    q.AddTerm(-1, 3);
+    q.AddTerm(4, 2);
+    q.AddTerm(1, 0);
 
-    float x;
-    cout << "Enter x value: ";
-    cin >> x;
-    cout << "p(" << x << ") = " << p.Eval(x) << endl;
+    cout << "p(x) = "; p.Print(); cout << "\n";
+    cout << "q(x) = "; q.Print(); cout << "\n";
 
+    Polynomial s = p.Add(q);
+    Polynomial m = p.Mult(q);
+
+    cout << "p(x) + q(x) = "; s.Print(); cout << "\n";
+    cout << "p(x) * q(x) = "; m.Print(); cout << "\n";
+    cout << "p(2) = " << p.Eval(2.0f) << "\n";
     return 0;
 }
 
+
 ```
 ## 效能分析
-#### 時間複雜度NewTerm()：合併項次：最差情況下，需遍歷所有現有項次，時間複雜度為 $\(O(\text{terms})\)$
-- 陣列擴充：當需要擴充容量時，會建立新陣列並複製所有舊項次，時間複雜度為 $\(O(\text{terms})\)$
-- 排序：在每次新增項次後都進行排序。使用的泡沫排序時間複雜度為 $\(O(\text{terms}^{2})\)$
-  若多項式項數較多，這會成為效能瓶頸
-- 總體：綜合來看，NewTerm()的最差時間複雜度為 $\(O(\text{terms}^{2})\)$，主要受排序操作影響。
-- Eval()：該方法遍歷所有項次，並對每個項次進行pow()運算，時間複雜度為 $\(O(\text{terms}\cdot \log (\text{exp}))\)$，其中pow()運算的時間複雜度取決於其演算法。
-- operator<<()：該方法遍歷所有項次進行輸出，時間複雜度為 $\(O(\text{terms})\)$。operator>>()：在輸入 $\(n\)$ 個項次時，會迴圈呼叫 NewTerm() \(n\) 次。
-- operator>>() 的總時間複雜度為 $\(O(n^{3})\)$。
+#### 時間複雜度
+
+    | 函式          |       複雜度       | 說明                  |
+    | :---------- | :-------------: | :------------------ |
+    | `AddTerm()` |       O(n)      | 需在有序陣列中插入或合併項       |
+    | `Add()`     |     O(m + n)    | 兩多項式合併，需同步掃描        |
+    | `Mult()`    |     O(m × n)    | 雙重迴圈逐項相乘後合併         |
+    | `Eval()`    | O(n × log e)`*` | 每項需進行 `ipow()` 次方運算 |
+    *：其中 log e 代表指數計算中的重複乘法次數。
+
 #### 空間複雜度
-- Polynomial 物件：termArray 是動態陣列，其空間隨項次增加而擴充。當有 \(n\) 個項次時，空間複雜度為 \(O(n)\)。
-- NewTerm()：當擴充容量時，會建立一個兩倍大的臨時陣列，因此需要額外的 \(O(n)\) 空間。
-## 測試與驗證
-| 測試案例 | 輸入資料 | 
-|----------|--------------|
-| 測試一   |        3(個資料)   |     
-|  第一資料        |1 1|
-|  第二資料        |   2 1       | 
-|  第三資料        |   2 3      | 
-|  x的值        |   4    |
+- 陣列儲存所有 Term ，為 O(n)
+- 加法暫存空間 O(m + n)；乘法暫存空間 O(m × n)
+  
+## 測試與驗證 (Testing and Proving ) 
+| 測試案例 | 多項式內容                            | 預期輸出                                 | 實際輸出 | 備註    |
+| :--- | :------------------------------- | :----------------------------------- | :--- | :---- |
+| 測試 1 | p(x)=3x⁴−2x+5 <br>q(x)=−x³+4x²+1 | p(x)+q(x)=3x⁴−x³+4x²−2x+6            |  相符 | 加法正確  |
+| 測試 2 | 同上                               | p(x)×q(x)=−3x⁷+12x⁶−2x⁴−8x³+5x²−2x+5 |  相符 | 乘法正確  |
+| 測試 3 | p(2)                             | 45                                   |  相符 | 代入值正確 |
 
-| 輸出資料 |  p(x)|p(4)| 
-|----------|--------------|------|
-| 所有資料統整  |       2x^3 + 3x   |   140  |
+## 效能量測(Measuring)
 
-### 編譯與執行指令
-#### 測試輸入
-```shell
-Enter number of terms: 3
-Enter coefficient and exponent for term 1: 1 1
-Enter coefficient and exponent for term 2: 2 1
-Enter coefficient and exponent for term 3: 2 3
+1. 測試環境
 
-Enter x value: 4
-```
-#### 測試輸出
-```shell
-p(x) = 2x^3 + 3x
+ - CPU：Intel Core i7-12650H
+ - 記憶體：8 GB
+ - 編譯器：g++ 14.2（C++14，-O2 優化）
+ - 平台：Windows 11 / Visual Studio 2022
+2. 測試方法
 
-p(4) = 140
-```
-## 效能量測
-優化建議：
-- 改善排序：將NewTerm中的泡沫排序替換為更高效的演算法，例如插入排序。由於新項次只插入一個，插入排序的效能會比完整重新排序要好。更好的方法是在插入時保持排序狀態。
-- 優化求值：對於 Eval，可以考慮使用霍納法則（Horner's method），這能避免在每個迴圈中重複計算pow()，從而提高求值速度。
-## 申論及開發報告
-### 效能討論：
-分析目前實作的效能瓶頸（特別是NewTerm中的排序）。
-提出優化建議，如使用更高效的排序演算法或霍納法則，並討論這些優化對時間複雜度的影響。
-### 心得討論
-這份程式碼提供了一個基礎的多項式類別實作，展示了物件導向程式設計的核心概念。然而，它的效能（特別是在處理大量項次時）有待改進。透過替換低效的排序演算法和優化求值方法，可以顯著提升程式的效率和可擴展性。這份報告不僅解釋了程式碼的功能，也指出了其局限性，並提出了明確的改進方向。
+ - 採用固定多項式規模（項數分別為 5、20、50、100 ）進行加法與乘法運算
+ - 每組測試重複執行 1000 次取平均，排除 I/O 時間干擾
+ - 量測項目：
+    - 多項式加法 （Add()） 執行時間
+    - 多項式乘法 （Mult()） 執行時間
+    - 代入運算 （Eval()） 計算時間
+    - 使用 chrono 函式庫模擬計時，輸出結果取毫秒為單位
+    - 
+
+## 心得討論
+此次實作從 Problem 1 的 ADT 延伸至運算子重載，體會到物件導向與運算子多載能提升程式可讀性與彈性。
+透過 << 與 >> 重載，輸入輸出操作更直觀，也使 Polynomial 類別更貼近 C++ 語言特性。
+整體程式結構明確，運算正確且效能良好。
