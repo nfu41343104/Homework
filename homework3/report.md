@@ -1,6 +1,5 @@
 # 41343104
-# 作業二之Polynomial
-# Problem1
+# 作業三之Programming Project
 
 ## 解題說明
 本次作業實作一個多項式類別 **Polynomial**，用以表示與操作單變數多項式。
