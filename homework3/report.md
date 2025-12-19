@@ -1,6 +1,5 @@
 # 41343104
 # 作業三之Programming Project
-
 ## 解題說明
 本次作業實作一個多項式類別 **Polynomial**，用以表示與操作單變數多項式。
 多項式採用 **循環鏈結串列（circular linked list）** 搭配 **表頭節點（header node）** 進行儲存，
