@@ -6,54 +6,54 @@ struct Node {
     Node* left;
     Node* right;
 
-    Node(int val) {
-        data = val;
-        left = nullptr;
-        right = nullptr;
+    Node(int v) {
+        data = v;
+        left = NULL;
+        right = NULL;
     }
 };
 
-// 插入 BST
-Node* insert(Node* root, int val) {
-    if (root == nullptr) {
-        return new Node(val);
+Node* insert(Node* root, int value) {
+    if (root == NULL) {
+        return new Node(value);
     }
 
-    if (val < root->data) {
-        root->left = insert(root->left, val);
+    if (value < root->data) {
+        root->left = insert(root->left, value);
     } else {
-        root->right = insert(root->right, val);
+        root->right = insert(root->right, value);
     }
 
     return root;
 }
 
-// 前序走訪
-void preorder(Node* root, bool &first) {
-    if (root == nullptr) return;
+void inorder(Node* root, bool& first) {
+    if (root == NULL) return;
 
-    if (!first) cout << ", ";
+    inorder(root->left, first);
+
+    if (!first) {
+        cout << ", ";
+    }
     cout << root->data;
     first = false;
 
-    preorder(root->left, first);
-    preorder(root->right, first);
+    inorder(root->right, first);
 }
 
 int main() {
-    int n;
+    int n, x;
     cin >> n;
 
-    Node* root = nullptr;
+    Node* root = NULL;
 
     for (int i = 0; i < n; i++) {
-        int x;
         cin >> x;
         root = insert(root, x);
     }
 
     bool first = true;
-    preorder(root, first);
+    inorder(root, first);
     cout << endl;
 
     return 0;
