@@ -1,4 +1,13 @@
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <random>
+#include <sstream>
+#include <string>
 using namespace std;
 
 struct Node {
@@ -8,28 +17,29 @@ struct Node {
 
     Node(int val) {
         data = val;
-        left = NULL;
-        right = NULL;
+        left = nullptr;
+        right = nullptr;
     }
 };
 
+// 插入 BST
 Node* insert(Node* root, int val) {
-    if (root == NULL) {
+    if (root == nullptr) {
         return new Node(val);
     }
 
     if (val < root->data) {
         root->left = insert(root->left, val);
-    }
-    else {
+    } else {
         root->right = insert(root->right, val);
     }
 
     return root;
 }
 
-void preorder(Node* root, bool& first) {
-    if (root == NULL) return;
+// 前序走訪
+void preorder(Node* root, bool &first) {
+    if (root == nullptr) return;
 
     if (!first) cout << ", ";
     cout << root->data;
@@ -40,17 +50,20 @@ void preorder(Node* root, bool& first) {
 }
 
 int main() {
-    int n, x;
+    int n;
     cin >> n;
 
-    Node* root = NULL;
+    Node* root = nullptr;
+
     for (int i = 0; i < n; i++) {
+        int x;
         cin >> x;
         root = insert(root, x);
     }
 
     bool first = true;
     preorder(root, first);
+    cout << endl;
 
     return 0;
 }
