@@ -1,7 +1,7 @@
 
 # 41343104
 
-# inorder
+# preorder
 
 ## 解題說明
 
