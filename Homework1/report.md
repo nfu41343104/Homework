@@ -16,6 +16,27 @@
 - Pop()：刪除最小值並進行下濾（BubbleDown）
 - Top()：回傳最小值
 
+## 解題策略
+
+1. 使用陣列實作完全二元樹（Heap）：
+   - index 從 1 開始，方便計算 parent 與 child
+   - parent = i / 2，child = 2i, 2i+1
+
+2. 維持 Min Heap 性質：
+   - 每個節點都小於等於其子節點
+   - root 為最小值
+
+3. 插入操作（Push）：
+   - 將新元素放在最後
+   - 透過 BubbleUp 向上調整
+
+4. 刪除操作（Pop）：
+   - 用最後一個元素取代 root
+   - 透過 BubbleDown 向下調整
+
+5. 空間管理：
+   - 使用動態陣列
+   - 當容量不足時進行 Resize（倍增）
 ## 程式實作
 
 ```cpp
