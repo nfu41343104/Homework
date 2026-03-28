@@ -3,18 +3,15 @@
 
 ## 解題說明
 
-本題要求設計一個 Min Priority Queue（最小優先佇列），並以 Heap 結構實作。
+本題透過 Heap 結構實作最小優先佇列（Min Priority Queue）。
 
-主要概念如下：
-- 使用抽象類別 MinPQ 定義 ADT
-- 建立 MinHeap 類別繼承 MinPQ
-- 利用完全二元樹（陣列）維持 heap 結構
-- root 永遠為最小值
+首先定義抽象類別 MinPQ 作為 ADT，再建立 MinHeap 類別繼承該介面並實作其功能。
 
-核心操作：
-- Push()：插入元素並進行上濾（BubbleUp）
-- Pop()：刪除最小值並進行下濾（BubbleDown）
-- Top()：回傳最小值
+在實作上，使用陣列表示完全二元樹，並透過以下兩個操作維持 Min Heap 性質：
+- 插入時進行 BubbleUp
+- 刪除時進行 BubbleDown
+
+確保每次操作後，heap 仍維持最小值位於 root。
 
 ## 解題策略
 
