@@ -400,6 +400,9 @@ private:
 
     Node* root;
 
+    // ========================
+    // (a) Insert Function
+    // ========================
     Node* insert(Node* node, int key) {
         if (node == nullptr) return new Node(key);
 
@@ -411,19 +414,31 @@ private:
         return node;
     }
 
+    // ========================
+    // Height Calculation
+    // ========================
     int height(Node* node) const {
         if (node == nullptr) return 0;
+
         int leftHeight = height(node->left);
         int rightHeight = height(node->right);
-        return 1 + max(leftHeight, rightHeight);
+
+        return 1 + (leftHeight > rightHeight ? leftHeight : rightHeight);
     }
 
+    // ========================
+    // (b) Find Minimum
+    // ========================
     Node* findMin(Node* node) {
-        while (node != nullptr && node->left != nullptr)
+        while (node != nullptr && node->left != nullptr) {
             node = node->left;
+        }
         return node;
     }
 
+    // ========================
+    // (b) Remove Function
+    // ========================
     Node* remove(Node* node, int key) {
         if (node == nullptr) return nullptr;
 
@@ -457,6 +472,7 @@ private:
                 node->right = remove(node->right, temp->key);
             }
         }
+
         return node;
     }
 
@@ -488,7 +504,10 @@ public:
 };
 
 int main() {
-    int testValues[] = { 100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+    // ========================
+    // (a) Random Insertion Test
+    // ========================
+    int testValues[] = {100, 500, 1000, 2000, 3000, 4000, 5000, 10000};
     int numTests = sizeof(testValues) / sizeof(testValues[0]);
 
     random_device rd;
@@ -502,8 +521,7 @@ int main() {
         BST tree;
 
         for (int j = 0; j < n; j++) {
-            int value = dist(gen);
-            tree.insert(value);
+            tree.insert(dist(gen));
         }
 
         int h = tree.height();
@@ -511,6 +529,24 @@ int main() {
 
         cout << n << "\t" << h << "\t" << ratio << "\n";
     }
+
+    // ========================
+    // (b) Delete Function Demo
+    // ========================
+    BST testTree;
+    testTree.insert(50);
+    testTree.insert(30);
+    testTree.insert(70);
+    testTree.insert(20);
+    testTree.insert(40);
+    testTree.insert(60);
+    testTree.insert(80);
+
+    cout << "\nBefore delete, height: " << testTree.height() << endl;
+
+    testTree.remove(50); // delete root (two children case)
+
+    cout << "After delete 50, height: " << testTree.height() << endl;
 
     return 0;
 }
