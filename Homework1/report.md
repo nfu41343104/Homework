@@ -248,4 +248,34 @@ int main() {
 ### 心得討論：
   本題讓我理解 Priority Queue 與 Heap 的關係，並實際實作出抽象類別與繼承架構，加深對資料結構與物件導向的理解。
 
-# 作業二 Max/Min Heap
+# 作業二 Binary Search Tree
+本題分為兩部分：
+
+### (a) 隨機插入 Binary Search Tree 並量測高度
+建立一棵**初始為空的 Binary Search Tree（BST）**，接著進行 `n` 次隨機插入。  
+插入值使用 **uniform random number generator** 產生。
+
+對每組 `n`，量測產生後 BST 的高度 `height`，並計算：
+
+\[
+\frac{height}{\log_2 n}
+\]
+
+測試範圍包含：
+
+- `100`
+- `500`
+- `1000`
+- `2000`
+- `3000`
+- ...
+- `10000`
+
+觀察 `height / log2(n)` 是否大致維持常數（約 2）。
+
+---
+
+### (b) 刪除指定 key 的節點
+撰寫 C++ 函式，從 Binary Search Tree 中刪除 key = `k` 的節點，並分析其時間複雜度。
+
+---
