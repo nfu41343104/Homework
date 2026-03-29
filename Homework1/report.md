@@ -279,3 +279,204 @@ int main() {
 撰寫 C++ 函式，從 Binary Search Tree 中刪除 key = `k` 的節點，並分析其時間複雜度。
 
 ---
+
+## 解題說明
+
+Binary Search Tree（BST）具有以下性質：
+
+- 左子樹所有節點的值都小於根節點
+- 右子樹所有節點的值都大於根節點
+
+因此可以根據這個性質來進行：
+
+- 插入（Insert）
+- 搜尋（Search）
+- 刪除（Delete）
+
+---
+
+## 解題策略
+
+### 1. 插入節點
+從 root 開始比較：
+
+- 若插入值小於目前節點，往左子樹遞迴
+- 若插入值大於目前節點，往右子樹遞迴
+- 若該位置為空，建立新節點
+
+---
+
+### 2. 計算樹高
+使用遞迴計算：
+
+- 空樹高度為 `0`
+- 否則：
+
+\[
+height = 1 + \max(leftHeight, rightHeight)
+\]
+
+---
+
+### 3. 刪除節點
+刪除 BST 節點時分成三種情況：
+
+#### (1) 沒有子節點
+直接刪除該節點。
+
+#### (2) 只有一個子節點
+讓該子節點取代原本節點的位置。
+
+#### (3) 有兩個子節點
+找到右子樹中最小的節點（或左子樹中最大的節點）來取代，再刪除替代節點。
+
+---
+
+### 4. 隨機測試
+使用：
+
+- `random_device`
+- `mt19937`
+- `uniform_int_distribution`
+
+產生隨機整數插入 BST，量測高度並計算 `height / log2(n)`。
+
+---
+
+## 程式實作
+
+```cpp
+#include <iostream>
+#include <random>
+#include <cmath>
+
+using namespace std;
+
+class BST {
+private:
+    struct Node {
+        int key;
+        Node* left;
+        Node* right;
+
+        Node(int k) : key(k), left(nullptr), right(nullptr) {}
+    };
+
+    Node* root;
+
+    Node* insert(Node* node, int key) {
+        if (node == nullptr) return new Node(key);
+
+        if (key < node->key)
+            node->left = insert(node->left, key);
+        else if (key > node->key)
+            node->right = insert(node->right, key);
+
+        return node;
+    }
+
+    int height(Node* node) const {
+        if (node == nullptr) return 0;
+        int leftHeight = height(node->left);
+        int rightHeight = height(node->right);
+        return 1 + max(leftHeight, rightHeight);
+    }
+
+    Node* findMin(Node* node) {
+        while (node != nullptr && node->left != nullptr)
+            node = node->left;
+        return node;
+    }
+
+    Node* remove(Node* node, int key) {
+        if (node == nullptr) return nullptr;
+
+        if (key < node->key) {
+            node->left = remove(node->left, key);
+        }
+        else if (key > node->key) {
+            node->right = remove(node->right, key);
+        }
+        else {
+            // case 1: no child
+            if (node->left == nullptr && node->right == nullptr) {
+                delete node;
+                return nullptr;
+            }
+            // case 2: one child
+            else if (node->left == nullptr) {
+                Node* temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (node->right == nullptr) {
+                Node* temp = node->left;
+                delete node;
+                return temp;
+            }
+            // case 3: two children
+            else {
+                Node* temp = findMin(node->right);
+                node->key = temp->key;
+                node->right = remove(node->right, temp->key);
+            }
+        }
+        return node;
+    }
+
+    void clear(Node* node) {
+        if (node == nullptr) return;
+        clear(node->left);
+        clear(node->right);
+        delete node;
+    }
+
+public:
+    BST() : root(nullptr) {}
+
+    ~BST() {
+        clear(root);
+    }
+
+    void insert(int key) {
+        root = insert(root, key);
+    }
+
+    void remove(int key) {
+        root = remove(root, key);
+    }
+
+    int height() const {
+        return height(root);
+    }
+};
+
+int main() {
+    int testValues[] = { 100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+    int numTests = sizeof(testValues) / sizeof(testValues[0]);
+
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dist(1, 1000000000);
+
+    cout << "n\tHeight\tHeight/log2(n)\n";
+
+    for (int i = 0; i < numTests; i++) {
+        int n = testValues[i];
+        BST tree;
+
+        for (int j = 0; j < n; j++) {
+            int value = dist(gen);
+            tree.insert(value);
+        }
+
+        int h = tree.height();
+        double ratio = h / log2((double)n);
+
+        cout << n << "\t" << h << "\t" << ratio << "\n";
+    }
+
+    return 0;
+}
+
+```
