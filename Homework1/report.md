@@ -38,170 +38,133 @@
 
 ```cpp
 #include <iostream>
-#include <random>
-#include <cmath>
+#include <cstdlib>
 
 using namespace std;
 
-class BST {
+// 抽象類別 MinPQ
+template <class T>
+class MinPQ {
+public:
+    virtual ~MinPQ() {}
+    virtual bool IsEmpty() const = 0;
+    virtual const T& Top() const = 0;
+    virtual void Push(const T& x) = 0;
+    virtual void Pop() = 0;
+};
+
+// MinHeap 實作
+template <class T>
+class MinHeap : public MinPQ<T> {
 private:
-    struct Node {
-        int key;
-        Node* left;
-        Node* right;
+    T* heap;
+    int capacity;
+    int heapSize;
 
-        Node(int k) : key(k), left(nullptr), right(nullptr) {}
-    };
-
-    Node* root;
-
-    // ========================
-    // (a) Insert Function
-    // ========================
-    Node* insert(Node* node, int key) {
-        if (node == nullptr) return new Node(key);
-
-        if (key < node->key)
-            node->left = insert(node->left, key);
-        else if (key > node->key)
-            node->right = insert(node->right, key);
-
-        return node;
+    void Resize() {
+        capacity *= 2;
+        T* newHeap = new T[capacity];
+        for (int i = 1; i <= heapSize; i++) {
+            newHeap[i] = heap[i];
+        }
+        delete[] heap;
+        heap = newHeap;
     }
 
-    // ========================
-    // Height Calculation
-    // ========================
-    int height(Node* node) const {
-        if (node == nullptr) return 0;
+    void BubbleUp(int index) {
+        while (index > 1) {
+            int parent = index / 2;
+            if (heap[parent] <= heap[index]) break;
 
-        int leftHeight = height(node->left);
-        int rightHeight = height(node->right);
+            T temp = heap[parent];
+            heap[parent] = heap[index];
+            heap[index] = temp;
 
-        return 1 + (leftHeight > rightHeight ? leftHeight : rightHeight);
+            index = parent;
+        }
     }
 
-    // ========================
-    // (b) Find Minimum
-    // ========================
-    Node* findMin(Node* node) {
-        while (node != nullptr && node->left != nullptr) {
-            node = node->left;
-        }
-        return node;
-    }
+    void BubbleDown(int index) {
+        while (2 * index <= heapSize) {
+            int child = 2 * index;
 
-    // ========================
-    // (b) Remove Function
-    // ========================
-    Node* remove(Node* node, int key) {
-        if (node == nullptr) return nullptr;
+            if (child + 1 <= heapSize && heap[child + 1] < heap[child]) {
+                child++;
+            }
 
-        if (key < node->key) {
-            node->left = remove(node->left, key);
-        }
-        else if (key > node->key) {
-            node->right = remove(node->right, key);
-        }
-        else {
-            // case 1: no child
-            if (node->left == nullptr && node->right == nullptr) {
-                delete node;
-                return nullptr;
-            }
-            // case 2: one child
-            else if (node->left == nullptr) {
-                Node* temp = node->right;
-                delete node;
-                return temp;
-            }
-            else if (node->right == nullptr) {
-                Node* temp = node->left;
-                delete node;
-                return temp;
-            }
-            // case 3: two children
-            else {
-                Node* temp = findMin(node->right);
-                node->key = temp->key;
-                node->right = remove(node->right, temp->key);
-            }
-        }
+            if (heap[index] <= heap[child]) break;
 
-        return node;
-    }
+            T temp = heap[index];
+            heap[index] = heap[child];
+            heap[child] = temp;
 
-    void clear(Node* node) {
-        if (node == nullptr) return;
-        clear(node->left);
-        clear(node->right);
-        delete node;
+            index = child;
+        }
     }
 
 public:
-    BST() : root(nullptr) {}
-
-    ~BST() {
-        clear(root);
+    MinHeap(int initialCapacity = 10) {
+        capacity = initialCapacity + 1; // index 從 1 開始
+        heapSize = 0;
+        heap = new T[capacity];
     }
 
-    void insert(int key) {
-        root = insert(root, key);
+    ~MinHeap() {
+        delete[] heap;
     }
 
-    void remove(int key) {
-        root = remove(root, key);
+    bool IsEmpty() const override {
+        return heapSize == 0;
     }
 
-    int height() const {
-        return height(root);
+    const T& Top() const override {
+        if (IsEmpty()) {
+            cerr << "Heap is empty.\n";
+            exit(1);
+        }
+        return heap[1];
+    }
+
+    void Push(const T& x) override {
+        if (heapSize + 1 == capacity) {
+            Resize();
+        }
+
+        heap[++heapSize] = x;
+        BubbleUp(heapSize);
+    }
+
+    void Pop() override {
+        if (IsEmpty()) {
+            cerr << "Heap is empty.\n";
+            exit(1);
+        }
+
+        heap[1] = heap[heapSize--];
+
+        if (!IsEmpty()) {
+            BubbleDown(1);
+        }
     }
 };
 
+// 測試主程式
 int main() {
-    // ========================
-    // (a) Random Insertion Test
-    // ========================
-    int testValues[] = {100, 500, 1000, 2000, 3000, 4000, 5000, 10000};
-    int numTests = sizeof(testValues) / sizeof(testValues[0]);
+    MinHeap<int> h;
 
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(1, 1000000000);
+    h.Push(20);
+    h.Push(5);
+    h.Push(15);
+    h.Push(2);
+    h.Push(8);
 
-    cout << "n\tHeight\tHeight/log2(n)\n";
+    cout << "Current Min: " << h.Top() << endl;
 
-    for (int i = 0; i < numTests; i++) {
-        int n = testValues[i];
-        BST tree;
+    h.Pop();
+    cout << "After Pop Min: " << h.Top() << endl;
 
-        for (int j = 0; j < n; j++) {
-            tree.insert(dist(gen));
-        }
-
-        int h = tree.height();
-        double ratio = h / log2((double)n);
-
-        cout << n << "\t" << h << "\t" << ratio << "\n";
-    }
-
-    // ========================
-    // (b) Delete Function Demo
-    // ========================
-    BST testTree;
-    testTree.insert(50);
-    testTree.insert(30);
-    testTree.insert(70);
-    testTree.insert(20);
-    testTree.insert(40);
-    testTree.insert(60);
-    testTree.insert(80);
-
-    cout << "\nBefore delete, height: " << testTree.height() << endl;
-
-    testTree.remove(50); // delete root (two children case)
-
-    cout << "After delete 50, height: " << testTree.height() << endl;
+    h.Pop();
+    cout << "After Pop Min: " << h.Top() << endl;
 
     return 0;
 }
